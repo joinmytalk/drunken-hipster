@@ -8,15 +8,18 @@ import (
 	"fmt"
 )
 
-func HandleRequest(w http.ResponseWriter, r *http.Request) {
+type RequestHandler struct {
+	Transport *http.Transport
+}
+
+func (h *RequestHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	log.Printf("incoming request: %#v", *r)
-	log.Printf("URL: %#v", *r.URL)
-	client := &http.Client{}
+
 	r.RequestURI = ""
 	r.URL.Scheme = "http"
 	r.URL.Host = "127.0.0.1:8000"
 
-	resp, err := client.Do(r)
+	resp, err := h.Transport.RoundTrip(r)
 	if err != nil {
 		w.WriteHeader(http.StatusServiceUnavailable)
 		fmt.Fprintf(w, "Error: %v", err)
@@ -39,7 +42,7 @@ func main() {
 	listen_addr := ":9000"
 
 	mux := http.NewServeMux()
-	mux.HandleFunc("/", HandleRequest)
+	mux.Handle("/", &RequestHandler{Transport:&http.Transport{DisableKeepAlives:false,DisableCompression:false}})
 
 	srv := &http.Server{Handler: mux, Addr: listen_addr}
 
