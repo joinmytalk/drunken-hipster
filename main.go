@@ -8,6 +8,7 @@ import (
 	"os"
 	"fmt"
 	"bufio"
+	"strings"
 )
 
 func Copy(dest *bufio.ReadWriter, src *bufio.ReadWriter) {
@@ -68,7 +69,7 @@ func (h *RequestHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		upgrade_hdrs := r.Header["Upgrade"]
 		log.Printf("Upgrade headers: %v", upgrade_hdrs)
 		if len(upgrade_hdrs) > 0 {
-			upgrade_websocket = (upgrade_hdrs[0] == "websocket")
+			upgrade_websocket = (strings.ToLower(upgrade_hdrs[0]) == "websocket")
 		}
 	}
 
