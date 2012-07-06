@@ -76,6 +76,18 @@ func (h *RequestHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	r.RequestURI = ""
 	r.URL.Scheme = "http"
 
+	if h.Frontend.AddForwarded {
+		remote_addr := r.RemoteAddr
+		idx := strings.LastIndex(remote_addr, ":")
+		if idx != -1 {
+			remote_addr = remote_addr[0:idx]
+			if remote_addr[0] == '[' && remote_addr[len(remote_addr)-1] == ']' {
+				remote_addr = remote_addr[1:len(remote_addr)-1]
+			}
+		}
+		r.Header.Add("X-Forwarded-For", remote_addr)
+	}
+
 	if len(h.Frontend.Hosts) == 0 {
 		backend := <-h.Backends
 		r.URL.Host = backend.ConnectString
