@@ -1,13 +1,16 @@
 drunken-hipster
 ===============
 
-drunken-hipster a WebSocket-aware SSL-capable HTTP reverse proxy/load balancer.
+drunken-hipster is a WebSocket-aware SSL-capable HTTP reverse proxy/load balancer.
 
 Building
 --------
 
 First, make sure you have the Go build environment correctly installed. See http://golang.org/
 for more information.
+
+Then run "make". This will in turn call the go utility to build the load balancer, resulting
+in a binary named hipsterd.
 
 
 Configuration
