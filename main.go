@@ -76,18 +76,12 @@ func (h *RequestHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	r.RequestURI = ""
 	r.URL.Scheme = "http"
 
-	host_hdrs := r.Header["Host"]
-	host_hdr := ""
-	if len(host_hdrs) > 0 {
-		host_hdr = host_hdrs[0]
-	}
-
 	if len(h.Frontend.Hosts) == 0 {
 		backend := <-h.Backends
 		r.URL.Host = backend.ConnectString
 		h.Backends <- backend
 	} else {
-		backend_list := h.HostBackends[host_hdr]
+		backend_list := h.HostBackends[r.Host]
 		if backend_list == nil {
 			if len(h.Frontend.Backends) == 0 {
 				http.Error(w, "no suitable backend found for request", http.StatusServiceUnavailable)
@@ -264,8 +258,7 @@ func main() {
 
 			frontend.HTTPS, err = cfg.GetBool(section, "https")
 			if err != nil {
-				log.Printf("error while getting [%s]https: %v, ignoring.", section, err)
-				continue
+				frontend.HTTPS = false
 			}
 
 			if frontend.HTTPS {
@@ -285,7 +278,7 @@ func main() {
 					continue
 				}
 				if frontend.CertFile == "" {
-					log.Printf("frontend %s has HTTPS enabled but no CertFile, ignoring.", frontend_name)
+					log.Printf("frontend %s has HTTPS enabled but no certfile, ignoring.", frontend_name)
 					continue
 				}
 			}
