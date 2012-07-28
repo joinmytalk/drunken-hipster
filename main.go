@@ -320,10 +320,10 @@ func main() {
 	exit_chan := make(chan int)
 	for name, frontend := range frontends {
 		log.Printf("Starting frontend %s...", name)
-		go func() {
-			frontend.Start(hosts, backends)
+		go func(fe *Frontend) {
+			fe.Start(hosts, backends)
 			exit_chan <- 1
-		}()
+		}(frontend)
 		count++
 	}
 
