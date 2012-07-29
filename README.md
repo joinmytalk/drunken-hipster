@@ -82,7 +82,7 @@ servers, you can optionally enable `X-Forwarded-For` headers:
 
 drunken-hipster also supports WebSockets out of the box. No special
 configuration is necessary. WebSockets are recognized by the `Connection:
-upgrade` and `Upgrade: websockets` HTTP requests headers.
+upgrade` and `Upgrade: websocket` HTTP requests headers.
 
 License
 -------
