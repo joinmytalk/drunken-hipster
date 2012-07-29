@@ -199,6 +199,17 @@ func main() {
 		os.Exit(1)
 	}
 
+	var access_f io.WriteCloser
+	accesslog_file, err := cfg.GetString("global", "accesslog")
+	if err == nil {
+		access_f, err = os.OpenFile(accesslog_file, os.O_WRONLY | os.O_APPEND | os.O_CREATE, 0600)
+		if err == nil {
+			defer access_f.Close()
+		} else {
+			log.Printf("Opening access log %s failed: %v", accesslog_file, err)
+		}
+	}
+
 	// first, extract backends
 	for _, section := range cfg.GetSections() {
 		if strings.HasPrefix(section, "backend ") {
@@ -320,10 +331,16 @@ func main() {
 	exit_chan := make(chan int)
 	for name, frontend := range frontends {
 		log.Printf("Starting frontend %s...", name)
-		go func(fe *Frontend) {
-			fe.Start(hosts, backends)
+		go func(fe *Frontend, name string) {
+			var accesslogger *log.Logger
+			if access_f != nil {
+				accesslogger = log.New(access_f, "frontend:" + name + " ", log.Ldate | log.Ltime | log.Lmicroseconds)
+			} else {
+				log.Printf("Not creating logger for frontend %s", name)
+			}
+			fe.Start(hosts, backends, accesslogger)
 			exit_chan <- 1
-		}(frontend)
+		}(frontend, name)
 		count++
 	}
 
@@ -333,7 +350,7 @@ func main() {
 	}
 }
 
-func (f *Frontend) Start(hosts map[string][]*Backend, backends map[string]*Backend) {
+func (f *Frontend) Start(hosts map[string][]*Backend, backends map[string]*Backend, logger *log.Logger) {
 	mux := http.NewServeMux()
 
 	hosts_chans := make(map[string]chan *Backend)
@@ -352,7 +369,13 @@ func (f *Frontend) Start(hosts map[string][]*Backend, backends map[string]*Backe
 		backends_chan <- backends[b]
 	}
 
-	mux.Handle("/", &RequestHandler{Transport: &http.Transport{DisableKeepAlives: false, DisableCompression: false}, Frontend: f, HostBackends: hosts_chans, Backends: backends_chan})
+	var request_handler http.Handler = &RequestHandler{Transport: &http.Transport{DisableKeepAlives: false, DisableCompression: false}, Frontend: f, HostBackends: hosts_chans, Backends: backends_chan}
+
+	if logger != nil {
+		request_handler = NewRequestLogger(request_handler, *logger)
+	}
+
+	mux.Handle("/", request_handler)
 
 	srv := &http.Server{Handler: mux, Addr: f.BindString}
 
