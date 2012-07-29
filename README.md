@@ -84,6 +84,26 @@ drunken-hipster also supports WebSockets out of the box. No special
 configuration is necessary. WebSockets are recognized by the `Connection:
 upgrade` and `Upgrade: websocket` HTTP requests headers.
 
+HTTPS Support
+-------------
+
+You can enable HTTPS support for a frontend in the following way:
+
+	[frontend my-frontend]
+	bind = [::]:443
+	https = true
+	keyfile = /path/to/key.pem
+	certfile = /path/to/cert.pem
+
+Logging
+-------
+
+If you want to write an access log for all HTTP requests that happen on all frontends,
+set the desired target file in the `global` section:
+
+	[global]
+	accesslog = /var/log/hipsterd.access.log
+
 License
 -------
 
