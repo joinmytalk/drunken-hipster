@@ -82,7 +82,7 @@ func (h *RequestHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		if idx != -1 {
 			remote_addr = remote_addr[0:idx]
 			if remote_addr[0] == '[' && remote_addr[len(remote_addr)-1] == ']' {
-				remote_addr = remote_addr[1:len(remote_addr)-1]
+				remote_addr = remote_addr[1 : len(remote_addr)-1]
 			}
 		}
 		r.Header.Add("X-Forwarded-For", remote_addr)
@@ -118,7 +118,7 @@ func (h *RequestHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	upgrade_websocket := false
-	if conn_hdr == "Upgrade" {
+	if strings.ToLower(conn_hdr) == "upgrade" {
 		log.Printf("got Connection: Upgrade")
 		upgrade_hdrs := r.Header["Upgrade"]
 		log.Printf("Upgrade headers: %v", upgrade_hdrs)
@@ -202,7 +202,7 @@ func main() {
 	var access_f io.WriteCloser
 	accesslog_file, err := cfg.GetString("global", "accesslog")
 	if err == nil {
-		access_f, err = os.OpenFile(accesslog_file, os.O_WRONLY | os.O_APPEND | os.O_CREATE, 0600)
+		access_f, err = os.OpenFile(accesslog_file, os.O_WRONLY|os.O_APPEND|os.O_CREATE, 0600)
 		if err == nil {
 			defer access_f.Close()
 		} else {
@@ -334,7 +334,7 @@ func main() {
 		go func(fe *Frontend, name string) {
 			var accesslogger *log.Logger
 			if access_f != nil {
-				accesslogger = log.New(access_f, "frontend:" + name + " ", log.Ldate | log.Ltime | log.Lmicroseconds)
+				accesslogger = log.New(access_f, "frontend:"+name+" ", log.Ldate|log.Ltime|log.Lmicroseconds)
 			} else {
 				log.Printf("Not creating logger for frontend %s", name)
 			}
@@ -345,7 +345,7 @@ func main() {
 	}
 
 	// this shouldn't return
-	for i := 0 ; i < count; i++ {
+	for i := 0; i < count; i++ {
 		<-exit_chan
 	}
 }
